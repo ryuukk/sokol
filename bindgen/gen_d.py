@@ -376,7 +376,7 @@ def gen_struct(decl, prefix):
             l(f"    {t0} {field_name};")
         else:
             sys.exit(f"ERROR gen_struct: {field_type} {field_name};")
-    l("};")
+    l("}")
 
 def gen_consts(decl, prefix):
     for item in decl['items']:
@@ -393,7 +393,7 @@ def gen_enum(decl, prefix):
                 l(f"    {item_name} = {item['value']},")
             else:
                 l(f"    {item_name},")
-    l("};")
+    l("}")
 
 def gen_func_c(decl, prefix):
     l(f"{funcdecl_result_c(decl, prefix)} {decl['name']}({funcdecl_args_c(decl, prefix)});")
