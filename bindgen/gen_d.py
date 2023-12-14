@@ -396,7 +396,7 @@ def gen_enum(decl, prefix):
     l("}")
 
 def gen_func_c(decl, prefix):
-    l(f"{funcdecl_result_c(decl, prefix)} {decl['name']}({funcdecl_args_c(decl, prefix)});")
+    l(f"extern(C) {funcdecl_result_c(decl, prefix)} {decl['name']}({funcdecl_args_c(decl, prefix)});")
 
 def gen_func_d(decl, prefix):
     c_func_name = decl['name']
@@ -446,7 +446,6 @@ def pre_parse(inp):
                 enum_items[enum_name].append(as_enum_item_name(item['name']))
 
 def gen_imports(inp, dep_prefixes):
-    l('extern(C):')
     for dep_prefix in dep_prefixes:
         dep_module_name = module_names[dep_prefix]
         l(f'import {dep_module_name}.{dep_prefix[:-1]};')
@@ -461,10 +460,6 @@ def gen_helpers(inp):
     
     if inp['prefix'] in ['sg_', 'sdtx_', 'sshape_']:
         l('// helper function to convert "anything" to a Range struct')
-        l('struct Range {')
-        l('    const void* ptr;')
-        l('    size_t size;')
-        l('}')
         l('')
         l('Range asRange(T)(T val) {')
         l('    static if (isPointer!T) {')
@@ -500,6 +495,7 @@ def gen_helpers(inp):
 def gen_module(inp, dep_prefixes):
     l('// machine generated, do not edit')
     l('')
+    l(f'module sokol.{inp["module"]};')
     gen_imports(inp, dep_prefixes)
     gen_helpers(inp)
     pre_parse(inp)
