@@ -207,7 +207,7 @@ def as_c_arg_type(arg_type, prefix):
     elif util.is_void_ptr(arg_type):
         return "void*"
     elif util.is_const_void_ptr(arg_type):
-        return "const void*"
+        return "const(void)*"
     elif util.is_string_ptr(arg_type):
         return "const (char*)"
     elif is_const_struct_ptr(arg_type):
@@ -236,7 +236,7 @@ def as_d_arg_type(arg_prefix, arg_type, prefix):
     elif util.is_void_ptr(arg_type):
         return "void*" + pre
     elif util.is_const_void_ptr(arg_type):
-        return "const void*" + pre
+        return "const(void)*" + pre
     elif util.is_string_ptr(arg_type):
         return "const (char*)" + pre
     elif is_const_struct_ptr(arg_type):
@@ -275,7 +275,7 @@ def funcptr_result_c(field_type):
     elif is_prim_type(res_type):
         return as_d_prim_type(res_type)
     elif util.is_const_void_ptr(res_type):
-        return 'const void*'
+        return 'const(void)*'
     elif util.is_void_ptr(res_type):
         return 'void*'
     else:
@@ -332,7 +332,7 @@ def gen_struct(decl, prefix):
         elif util.is_string_ptr(field_type):
             l(f"    const (char*) {field_name};")
         elif util.is_const_void_ptr(field_type):
-            l(f"    const void* {field_name};")
+            l(f"    const(void)* {field_name};")
         elif util.is_void_ptr(field_type):
             l(f"    void* {field_name};")
         elif is_const_prim_ptr(field_type):
@@ -358,7 +358,7 @@ def gen_struct(decl, prefix):
                 t1 = f"{d_type}[]"
                 l(f"    {t0} {field_name};")
             elif util.is_const_void_ptr(array_type):
-                l(f"    const void*[{array_sizes[0]}] {field_name};")
+                l(f"    const(void)*[{array_sizes[0]}] {field_name};")
             else:
                 sys.exit(f"ERROR gen_struct: array {field_name}: {field_type} => {array_type} [{array_sizes[0]}]")
         elif util.is_2d_array_type(field_type):
