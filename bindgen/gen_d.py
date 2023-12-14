@@ -448,7 +448,8 @@ def pre_parse(inp):
 def gen_imports(inp, dep_prefixes):
     for dep_prefix in dep_prefixes:
         dep_module_name = module_names[dep_prefix]
-        l(f'import {dep_module_name}.{dep_prefix[:-1]};')
+        l(f'import sokol.{dep_module_name};')
+        l(f'alias {dep_prefix[:-1]} = sokol.{dep_module_name};')
     l('')
 
 def gen_helpers(inp):
