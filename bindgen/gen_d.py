@@ -17,6 +17,7 @@ module_names = {
     'slog_':    'log',
     'sg_':      'gfx',
     'sapp_':    'app',
+    'sapp_sg':  'glue',
     'stm_':     'time',
     'saudio_':  'audio',
     'sgl_':     'gl',
@@ -32,14 +33,15 @@ c_source_paths = {
     'saudio_':  'sokol-d/src/sokol/c/sokol_audio.c',
     'sgl_':     'sokol-d/src/sokol/c/sokol_gl.c',
     'sdtx_':    'sokol-d/src/sokol/c/sokol_debugtext.c',
+    "sapp_sg":  'sokol-d/src/sokol/c/sokol_glue.c',
     'sshape_':  'sokol-d/src/sokol/c/sokol_shape.c',
 }
 
 ignores = [
     'sdtx_printf',
     'sdtx_vprintf',
-    'sg_install_trace_hooks',
-    'sg_trace_hooks',
+    # 'sg_install_trace_hooks',
+    # 'sg_trace_hooks',
 ]
 
 # functions that need to be exposed as 'raw' C callbacks without a Dlang wrapper function
@@ -49,6 +51,7 @@ c_callbacks = [
 
 # NOTE: syntax for function results: "func_name.RESULT"
 overrides = {
+    'ref':                                  '_ref',
     'sgl_error':                            'sgl_get_error',   # 'error' is reserved in Dlang
     'sgl_deg':                              'sgl_as_degrees',
     'sgl_rad':                              'sgl_as_radians',
@@ -209,7 +212,7 @@ def as_c_arg_type(arg_type, prefix):
     elif util.is_const_void_ptr(arg_type):
         return "const(void)*"
     elif util.is_string_ptr(arg_type):
-        return "const (char*)"
+        return "const(char*)"
     elif is_const_struct_ptr(arg_type):
         return f"const {as_d_struct_type(util.extract_ptr_type(arg_type), prefix)} *"
     elif is_prim_ptr(arg_type):
@@ -238,7 +241,7 @@ def as_d_arg_type(arg_prefix, arg_type, prefix):
     elif util.is_const_void_ptr(arg_type):
         return "const(void)*" + pre
     elif util.is_string_ptr(arg_type):
-        return "const (char*)" + pre
+        return "scope const(char*)" + pre
     elif is_const_struct_ptr(arg_type):
         # not a bug, pass const structs by value
         return f"{as_d_struct_type(util.extract_ptr_type(arg_type), prefix)}" + pre
@@ -250,7 +253,7 @@ def as_d_arg_type(arg_prefix, arg_type, prefix):
         sys.exit(f"ERROR as_d_arg_type(): {arg_type}")
 
 def is_d_string(d_type):
-    return d_type == "const (char*)"
+    return d_type == "string"
 
 # get C-style arguments of a function pointer as string
 def funcptr_args_c(field_type, prefix):
@@ -314,6 +317,8 @@ def funcdecl_result_d(decl, prefix):
     decl_type = decl['type']
     result_type = check_override(f'{func_name}.RESULT', default=decl_type[:decl_type.index('(')].strip())
     d_res_type = as_d_arg_type(None, result_type, prefix)
+    if is_d_string(d_res_type):
+        d_res_type = "string"
     return d_res_type
 
 def gen_struct(decl, prefix):
@@ -330,7 +335,7 @@ def gen_struct(decl, prefix):
         elif is_enum_type(field_type):
             l(f"    {as_d_enum_type(field_type, prefix)} {field_name};")
         elif util.is_string_ptr(field_type):
-            l(f"    const (char*) {field_name};")
+            l(f"    const(char*) {field_name};")
         elif util.is_const_void_ptr(field_type):
             l(f"    const(void)* {field_name};")
         elif util.is_void_ptr(field_type):
@@ -338,7 +343,7 @@ def gen_struct(decl, prefix):
         elif is_const_prim_ptr(field_type):
             l(f"    const {as_d_prim_type(util.extract_ptr_type(field_type))};")
         elif util.is_func_ptr(field_type):
-            l(f"    {funcptr_result_c(field_type)} function({funcptr_args_c(field_type, prefix)}) {field_name};")
+            l(f"    extern(C) {funcptr_result_c(field_type)} function({funcptr_args_c(field_type, prefix)}) {field_name};")
         elif util.is_1d_array_type(field_type):
             array_type = util.extract_array_type(field_type)
             array_sizes = util.extract_array_sizes(field_type)
@@ -453,7 +458,7 @@ def gen_imports(inp, dep_prefixes):
 
 def gen_helpers(inp):
     l('// helper function to convert a C string to a D string')
-    l('string cStrToDString(const(char*) c_str) {')
+    l('string cStrTod(const(char*) c_str) {')
     l('    import std.conv: to;')
     l('    return c_str.to!string;')
     l('}')
@@ -478,17 +483,18 @@ def gen_helpers(inp):
         l("            putc(b);")
         l("        }")
         l("    }")
-        l("    void writeMultiple(ubyte b, ulong n) @nogc nothrow {")
+        l("    void writeMultiple(ubyte b, ulong n) @trusted {")
         l("        foreach(_; 0..n) {")
-        l("            putc(cast(int)b, core.stdc.stdio.stdout);")
+        l("            putc(cast(int) b);")
         l("        }")
         l("    }")
         l("}")
         l('')
-        l("void print(Args...)(const char[] fmt, Args args){")
+        l("void print(Args...)(const char[] fmt, Args args) @safe {")
+        l('    import std.array;')
         l('    import std.format;')
-        l("    Writer w;")
-        l('    formattedWrite(&w, fmt, args);')
+        l('    auto w = appender!string();')
+        l('    formattedWrite(w, fmt, args);')
         l("}")
         l("")
 
