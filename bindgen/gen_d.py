@@ -401,7 +401,7 @@ def gen_enum(decl, prefix):
     l("}")
 
 def gen_func_c(decl, prefix):
-    l(f"extern(C) {funcdecl_result_c(decl, prefix)} {decl['name']}({funcdecl_args_c(decl, prefix)});")
+    l(f"extern(C) {funcdecl_result_c(decl, prefix)} {decl['name']}({funcdecl_args_c(decl, prefix)}) @system @nogc nothrow;")
 
 def gen_func_d(decl, prefix):
     c_func_name = decl['name']
@@ -411,7 +411,7 @@ def gen_func_d(decl, prefix):
         l(f"alias {d_func_name} = {c_func_name};")
     else:
         d_res_type = funcdecl_result_d(decl, prefix)
-        l(f"{d_res_type} {d_func_name}({funcdecl_args_d(decl, prefix)}) {{")
+        l(f"{d_res_type} {d_func_name}({funcdecl_args_d(decl, prefix)}) @trusted @nogc nothrow {{")
         if is_d_string(d_res_type):
             # special case: convert C string to d string slice
             s = f"    return cStrTod({c_func_name}("
