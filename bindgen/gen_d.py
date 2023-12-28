@@ -161,8 +161,9 @@ def as_enum_item_name(s):
     outp = s.lstrip('_')
     parts = outp.split('_')[2:]
     outp = '_'.join(parts)
+    outp = outp.capitalize()
     if outp[0].isdigit():
-        outp = '_' + outp
+        outp = '_' + outp.capitalize()
     return outp
 
 def enum_default_item(enum_name):
@@ -237,9 +238,9 @@ def as_d_arg_type(arg_prefix, arg_type, prefix):
     elif is_enum_type(arg_type):
         return as_d_enum_type(arg_type, prefix) + pre
     elif util.is_void_ptr(arg_type):
-        return "void*" + pre
+        return "scope void*" + pre
     elif util.is_const_void_ptr(arg_type):
-        return "const(void)*" + pre
+        return "scope const(void*)" + pre
     elif util.is_string_ptr(arg_type):
         return "scope const(char*)" + pre
     elif is_const_struct_ptr(arg_type):
@@ -393,7 +394,7 @@ def gen_enum(decl, prefix):
     l(f"enum {as_d_enum_type(enum_name, prefix)} {{")
     for item in decl['items']:
         item_name = as_enum_item_name(check_override(item['name']))
-        if item_name != "FORCE_U32":
+        if item_name != "Force_u32":
             if 'value' in item:
                 l(f"    {item_name} = {item['value']},")
             else:
