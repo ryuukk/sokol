@@ -40,8 +40,6 @@ c_source_paths = {
 ignores = [
     'sdtx_printf',
     'sdtx_vprintf',
-    # 'sg_install_trace_hooks',
-    # 'sg_trace_hooks',
 ]
 
 # functions that need to be exposed as 'raw' C callbacks without a Dlang wrapper function
@@ -211,9 +209,9 @@ def as_c_arg_type(arg_type, prefix):
     elif util.is_void_ptr(arg_type):
         return "void*"
     elif util.is_const_void_ptr(arg_type):
-        return "const(void)*"
+        return "scope const(void)*"
     elif util.is_string_ptr(arg_type):
-        return "const(char*)"
+        return "scope const(char)*"
     elif is_const_struct_ptr(arg_type):
         return f"const {as_d_struct_type(util.extract_ptr_type(arg_type), prefix)} *"
     elif is_prim_ptr(arg_type):
@@ -242,7 +240,7 @@ def as_d_arg_type(arg_prefix, arg_type, prefix):
     elif util.is_const_void_ptr(arg_type):
         return "scope const(void*)" + pre
     elif util.is_string_ptr(arg_type):
-        return "scope const(char*)" + pre
+        return "string" + pre
     elif is_const_struct_ptr(arg_type):
         # not a bug, pass const structs by value
         return f"{as_d_struct_type(util.extract_ptr_type(arg_type), prefix)}" + pre
@@ -325,7 +323,7 @@ def funcdecl_result_d(decl, prefix):
 def gen_struct(decl, prefix):
     struct_name = check_override(decl['name'])
     d_type = as_d_struct_type(struct_name, prefix)
-    l(f"struct {d_type} {{")
+    l(f"extern(C)\nstruct {d_type} {{")
     for field in decl['fields']:
         field_name = check_override(field['name'])
         field_type = check_override(f'{struct_name}.{field_name}', default=field['type'])
@@ -336,7 +334,7 @@ def gen_struct(decl, prefix):
         elif is_enum_type(field_type):
             l(f"    {as_d_enum_type(field_type, prefix)} {field_name};")
         elif util.is_string_ptr(field_type):
-            l(f"    const(char*) {field_name};")
+            l(f"    const(char)* {field_name};")
         elif util.is_const_void_ptr(field_type):
             l(f"    const(void)* {field_name};")
         elif util.is_void_ptr(field_type):
@@ -412,7 +410,7 @@ def gen_func_d(decl, prefix):
         l(f"alias {d_func_name} = {c_func_name};")
     else:
         d_res_type = funcdecl_result_d(decl, prefix)
-        l(f"{d_res_type} {d_func_name}({funcdecl_args_d(decl, prefix)}) @trusted @nogc nothrow {{")
+        l(f"{d_res_type} {d_func_name}({funcdecl_args_d(decl, prefix)}) @trusted nothrow {{")
         if is_d_string(d_res_type):
             # special case: convert C string to d string slice
             s = f"    return cStrTod({c_func_name}("
@@ -428,7 +426,7 @@ def gen_func_d(decl, prefix):
             if is_const_struct_ptr(arg_type):
                 s += f"&{arg_name}"
             elif util.is_string_ptr(arg_type):
-                s += f"{arg_name}"
+                s += f"{arg_name}.ptr"
             else:
                 s += arg_name
         if is_d_string(d_res_type):
@@ -459,7 +457,7 @@ def gen_imports(inp, dep_prefixes):
 
 def gen_helpers(inp):
     l('// helper function to convert a C string to a D string')
-    l('string cStrTod(const(char*) c_str) {')
+    l('string cStrTod(T)(scope T c_str) nothrow {')
     l('    import std.conv: to;')
     l('    return c_str.to!string;')
     l('}')
