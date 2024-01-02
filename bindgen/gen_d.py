@@ -194,6 +194,12 @@ def is_const_struct_ptr(s):
             return True
     return False
 
+def is_struct_ptr(s):
+    for struct_type in struct_types:
+        if s == f"{struct_type} *":
+            return True
+    return False
+
 def type_default_value(s):
     return prim_defaults[s]
 
@@ -238,12 +244,13 @@ def as_d_arg_type(arg_prefix, arg_type, prefix):
     elif util.is_void_ptr(arg_type):
         return "scope void*" + pre
     elif util.is_const_void_ptr(arg_type):
-        return "scope const(void*)" + pre
+        return "scope const(void)*" + pre
     elif util.is_string_ptr(arg_type):
         return "string" + pre
+    elif is_struct_ptr(arg_type):
+        return f"ref {as_d_struct_type(util.extract_ptr_type(arg_type), prefix)}" + pre
     elif is_const_struct_ptr(arg_type):
-        # not a bug, pass const structs by value
-        return f"{as_d_struct_type(util.extract_ptr_type(arg_type), prefix)}" + pre
+        return f"ref {as_d_struct_type(util.extract_ptr_type(arg_type), prefix)}" + pre
     elif is_prim_ptr(arg_type):
         return f"{as_d_prim_type(util.extract_ptr_type(arg_type))} *" + pre
     elif is_const_prim_ptr(arg_type):
@@ -463,11 +470,15 @@ def gen_helpers(inp):
     l('}')
     
     if inp['prefix'] in ['sg_', 'sdtx_', 'sshape_']:
-        l('// helper function to convert "anything" to a Range struct')
         l('')
-        l('Range asRange(T)(T val) {')
+        l('// WIP: helper function to convert "anything" to a Range struct')
+        l('Range asRange(T)(T val) @safe {')
+        l('    import std.traits;')
         l('    static if (isPointer!T) {')
-        l('       return Range(val, __traits(classInstanceSize, T));')
+        l('       return Range(val, T.sizeof);')
+        l('    } else static if (is(T == float[])) {')
+        l('       auto arr = val.dup;')
+        l('       return Range(&arr[0], arr.length * arr[0].sizeof);')
         l('    } else static if (is(T == struct)) {')
         l('       return Range(val.tupleof);')
         l('    } else {')
