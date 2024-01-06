@@ -470,7 +470,6 @@ def gen_helpers(inp):
     l('    for (; *end; end++){}')
     l('    return cast(string) c_str[0 .. end - start];')
     l('}')
-    return ;
     
     if inp['prefix'] in ['sg_', 'sdtx_', 'sshape_']:
         l('')
