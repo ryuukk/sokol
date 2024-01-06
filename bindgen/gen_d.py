@@ -464,10 +464,13 @@ def gen_imports(inp, dep_prefixes):
 
 def gen_helpers(inp):
     l('// helper function to convert a C string to a D string')
-    l('string cStrTod(T)(scope T c_str) nothrow {')
-    l('    import std.conv: to;')
-    l('    return c_str.to!string;')
+    l('string cStrTod(inout(char)* c_str) nothrow {')
+    l('    auto start = c_str;')
+    l('    auto end = cast(char*) c_str;')
+    l('    for (; *end; end++){}')
+    l('    return cast(string) c_str[0 .. end - start];')
     l('}')
+    return ;
     
     if inp['prefix'] in ['sg_', 'sdtx_', 'sshape_']:
         l('')
