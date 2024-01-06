@@ -463,14 +463,9 @@ def gen_imports(inp, dep_prefixes):
     l('')
 
 def gen_helpers(inp):
-    l('// helper function to convert a C string to a D string')
-    l('string cStrTod(inout(char)* c_str) nothrow {')
-    l('    auto start = c_str;')
-    l('    auto end = cast(char*) c_str;')
-    l('    for (; *end; end++){}')
-    l('    return cast(string) c_str[0 .. end - start];')
-    l('}')
-    
+    l('// helper functions')
+    l('import sokol.utils: cStrTod;')
+    l('')
     if inp['prefix'] in ['sg_', 'sdtx_', 'sshape_']:
         l('')
         l('// WIP: helper function to convert "anything" to a Range struct')
