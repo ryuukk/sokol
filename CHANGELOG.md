@@ -1,5 +1,12 @@
 ## Updates
 
+#### 07-Jan-2024
+
+- sokol_app.h (macos+metal): window content no longer 'wobbles' during window resizing. Many
+  thanks to @Seb-degraff for picking up and investigating this longstanding issue
+  (https://github.com/floooh/sokol/issues/700), finding a fix for the remaining problem
+  and providing a really nice PR (https://github.com/floooh/sokol/pull/963)
+
 #### 06-Jan-2024
 
 > NOTE: if you use sokol_gfx.h and sokol_app.h together, make sure to update both. This is
@@ -21,9 +28,9 @@ pixel format constants in sokol_app.h had to move too!
         a line of 'compression blocks'. `width` is always in pixels.
       - `int sg_query_surface_pitch(sg_pixel_format fmt, int width, int height, int row_align_bytes)`:
         Computes number of bytes in a texture surface (e.g. a single mipmap) for a given
-        pixel format. `width` and `hight` are always in pixels.
+        pixel format. `width` and `height` are always in pixels.
 
-    The `row_align_bytes` parammeter is for added flexibility. For image data that goes into
+    The `row_align_bytes` parameter is for added flexibility. For image data that goes into
     the `sg_make_image()` or `sg_update_image()` functions this should generally be 1, because these
     functions take tightly packed image data as input no matter what alignment restrictions
     exist in the backend 3D APIs.
